@@ -1,7 +1,7 @@
 import { RequestHandler } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { ValidationError } from 'yup';
-import { Schema } from 'yup';
+import { Schema, ValidationError } from 'yup';
+
 
 type TProperty = 'body' | 'header' | 'params' | 'query';
 
