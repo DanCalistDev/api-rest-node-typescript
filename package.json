@@ -7,7 +7,7 @@
   "private": false,
   "scripts": {
     "dev": "ts-node-dev ./src/index.ts",
-    "build": "tsc",
+    "postinstall": "tsc",
     "test": "jest"
   },
   "dependencies": {
