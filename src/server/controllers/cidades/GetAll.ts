@@ -24,7 +24,11 @@ const prisma = new PrismaClient();
 
 export const getAll = async (req: Request<{}, {}, {}, IQueryProps>, res: Response) => {
   try {
-    const { page = 1, limit = 10, filter = '' } = req.query;
+    // eslint-disable-next-line prefer-const
+    let { page = 1, limit = 10, filter = '' } = req.query;
+
+    page = Number(page);
+    limit = Number(limit);
 
     const cidades = await prisma.cidade.findMany({
       skip: (page - 1) * limit,
