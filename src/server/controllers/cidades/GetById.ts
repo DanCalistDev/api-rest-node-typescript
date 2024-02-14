@@ -2,30 +2,46 @@ import { StatusCodes } from 'http-status-codes';
 import { Request, Response } from 'express';
 import * as yup from 'yup';
 import { Validation } from '../../shared/middlewares';
+import { PrismaClient } from '@prisma/client';
 
 interface IParamsProps {
-  id?: number;
+  id?: string;
  
 }
 
 export const getByIdValidation = Validation((getSchema) => ({
   params: getSchema<IParamsProps>(
     yup.object().shape({
-      id: yup.number().integer().required().moreThan(0),
+      id: yup.string().required(),
  
     })
   ),
 }));
 
-export const getById = async (req: Request<IParamsProps>, res: Response) => {
-  if (Number(req.params.id) === 99999) return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-    errors: {
-      default: 'Registro não encontrado'
-    }
-  });
+const prisma = new PrismaClient();
 
-  return res.status(StatusCodes.OK).json({
-    id: req.params.id,
-    nome: 'Vila Velha',
-  });
+export const getById = async (req: Request<IParamsProps>, res: Response) => {
+
+  const { id } = req.params;
+  
+  if(!id) {
+    return res.status(StatusCodes.BAD_REQUEST).json({ error: 'ID é obrigatório' });
+  }
+
+  try {
+    const cidade = await prisma.cidade.findUnique({
+      where: {
+        id: id,
+      },
+    });
+
+    if (!cidade) {
+      return res.status(StatusCodes.NOT_FOUND).json({ error: 'Cidade não encontrada' });
+    }
+
+    return res.status(StatusCodes.OK).json(cidade);
+  } catch (error) {
+    console.error(error);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'Erro ao buscar cidade' });
+  }
 };
