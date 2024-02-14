@@ -1,6 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const { PrismaClient } = require('@prisma/client');
+import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
+import bcrypt from 'bcrypt';
 
 async function main() {
   // Populando a tabela Cidade
@@ -57,6 +58,24 @@ async function main() {
   for (const pessoa of pessoas) {
     await prisma.pessoa.create({
       data: pessoa,
+    });
+  }
+
+  const users = [
+    {
+      nome: 'João Silva',
+      email: 'joao@gmail.com',
+      senha: await bcrypt.hash('senha123', 10),
+    },
+    {
+      nome: 'Maria Santos',
+      email: 'maria@gmail.com',
+      senha: await bcrypt.hash('senha123', 10),
+    },
+  ];
+  for (const user of users) {
+    await prisma.user.create({
+      data: user,
     });
   }
 }
