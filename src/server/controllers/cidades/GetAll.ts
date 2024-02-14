@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { Request, Response } from 'express';
 import * as yup from 'yup';
 import { Validation } from '../../shared/middlewares';
+import { PrismaClient } from '@prisma/client';
 
 interface IQueryProps {
   page?: number;
@@ -19,14 +20,29 @@ export const getAllValidation = Validation((getSchema) => ({
   ),
 }));
 
-export const getAll = async (req: Request<{}, {}, {}, IQueryProps>, res: Response) => {
-  res.setHeader('access-control-expose-headers', 'x-total-count');
-  res.setHeader('x-total-count', 1);
+const prisma = new PrismaClient();
 
-  return res.status(StatusCodes.OK).json([
-    {
-      id: 1,
-      nome: 'Vila Velha',
-    }
-  ]);
+export const getAll = async (req: Request<{}, {}, {}, IQueryProps>, res: Response) => {
+  try {
+    const { page = 1, limit = 10, filter = '' } = req.query;
+
+    const cidades = await prisma.cidade.findMany({
+      skip: (page - 1) * limit,
+      take: limit,
+      where: {
+        nome: {
+          contains: filter,
+        },
+      },
+    });
+
+    res.setHeader('access-control-expose-headers', 'x-total-count');
+    res.setHeader('x-total-count', cidades.length);
+
+    return res.status(StatusCodes.OK).json(cidades);
+  } catch (error) {
+    console.error(error);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'Erro ao buscar cidades' });
+  }
 };
+
