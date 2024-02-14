@@ -2,9 +2,10 @@ import { StatusCodes } from 'http-status-codes';
 import { Request, Response } from 'express';
 import * as yup from 'yup';
 import { Validation } from '../../shared/middlewares';
+import { PrismaClient } from '@prisma/client';
 
 interface IParamsProps {
-  id?: number;
+  id?: string;
  
 }
 interface IBodyProps {
@@ -20,18 +21,39 @@ export const updateByIdValidation = Validation((getSchema) => ({
   ),
   params: getSchema<IParamsProps>(
     yup.object().shape({
-      id: yup.number().integer().required().moreThan(0),
+      id: yup.string().required(),
     })
   ),
  
 }));
 
-export const updateById = async (req: Request<IParamsProps, {}, IBodyProps>, res: Response) => {
-  if (Number(req.params.id) === 99999) return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-    errors: {
-      default: 'Registro não encontrado'
-    }
-  });
+const prisma = new PrismaClient();
 
-  return res.status(StatusCodes.NO_CONTENT).send();
+export const updateById = async (req: Request<IParamsProps, {}, IBodyProps>, res: Response) => {
+  const { id } = req.params;
+  const { nome } = req.body;
+
+  if (!id) {
+    return res.status(StatusCodes.BAD_REQUEST).json({ error: 'ID é obrigatório' });
+  }
+
+  if (!nome) {
+    return res.status(StatusCodes.BAD_REQUEST).json({ error: 'Nome é obrigatório' });
+  }
+
+  try {
+    const cidadeAtualizada = await prisma.cidade.update({
+      where: {
+        id:id,
+      },
+      data: {
+        nome,
+      },
+    });
+
+    return res.status(StatusCodes.OK).json(cidadeAtualizada);
+  } catch (error) {
+    console.error(error);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'Erro ao atualizar cidade' });
+  }
 };
